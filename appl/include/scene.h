@@ -2,6 +2,14 @@
 #define SCENE_H
 #include "SDL.h"
 #include "vector3.h"
+#include "color.h"
+
+
+typedef struct sphere_t {
+    vector3_t position;
+    float radius;
+    color_t color;
+} sphere_t;
 
 typedef struct scene_t {
     struct {
@@ -15,6 +23,12 @@ typedef struct scene_t {
         float fov_tan;
         vector3_t position;
     } camera;
+    sphere_t sphere;
+    struct {
+        vector3_t direction;
+        color_t color;
+    } light;
+    color_t bg_color;
 } scene_t;
 
 scene_t* scene_create(int w, int h, SDL_Renderer*);

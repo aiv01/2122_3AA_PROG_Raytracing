@@ -16,6 +16,15 @@ scene_t* scene_create(int screen_width, int screen_height, SDL_Renderer* r) {
    float half_fov_rad = half_fov * M_PI / 180.f;
    scene->camera.fov_tan = tanf(half_fov_rad);
    scene->camera.position = (vector3_t){0.f, 0.f, 0.f};
+
+   scene->sphere.position = (vector3_t){0.f, 0.f, -5.f};
+   scene->sphere.radius = 1.f;
+   scene->sphere.color = (color_t){1.f, 0.f, 0.f};
+
+   scene->light.direction = (vector3_t){0.f, -1.f, 0.f};
+   scene->light.color = (color_t){1.f, 1.f, 1.f};
+
+   scene->bg_color = (color_t){0.f, 0.f, 0.f};
    return scene;
 }
 
