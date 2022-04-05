@@ -1,9 +1,20 @@
 #ifndef SCENE_H
 #define SCENE_H
 #include "SDL.h"
+#include "vector3.h"
 
 typedef struct scene_t {
-    int v;
+    struct {
+        int width;
+        int height;
+        float aspect_ratio;
+        SDL_Renderer* render;
+    } screen;
+    struct {
+        float fov;
+        float fov_tan;
+        vector3_t position;
+    } camera;
 } scene_t;
 
 scene_t* scene_create(int w, int h, SDL_Renderer*);
