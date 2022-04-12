@@ -74,9 +74,26 @@ color_t ray_trace(ray_t* ray, scene_t* scene) {
     bool shadow_has_hit = ray_cast(&shadow_ray, scene->spheres, scene->sphere_count, &shadow_hit);
     if (shadow_has_hit) return scene->bg_color;
 
-    //Shading Diffuse
-    float lambert = fmaxf(0.f, vector3_dot(&shadow_ray.direction, &hit.normal));
     
-    color_t c = color_mult_scal(&hit.object->color, lambert);
-    return c;
+    //Ambient
+    //TODO
+
+    //Diffuse
+    float lambert = fmaxf(0.f, vector3_dot(&shadow_ray.direction, &hit.normal));
+    color_t diffuse = color_mult_scal(&hit.object->color, lambert);
+    
+    //Specular
+    vector3_t* L = &shadow_ray.direction;
+    vector3_t V = vector3_mult_scal(&hit.point, -1.f);
+    vector3_t H = vector3_sum(L, &V);
+    H = vector3_norm(&H);
+    float specular_strenght = fmaxf(0.f, vector3_dot(&hit.normal, &H));
+    float specular_intesity = powf(specular_strenght, 100.f);
+    color_t specular = color_mult_scal(&scene->light.color, specular_intesity);
+
+    color_t final = {0.f, 0.f, 0.f};
+    final = color_sum(&final, &diffuse);
+    final = color_sum(&final, &specular);
+    final = color_clamp(&final);
+    return final;
 }
