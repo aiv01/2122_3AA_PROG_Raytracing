@@ -5,15 +5,28 @@
 bool ray_cast(ray_t* ray, sphere_t* sphere, rayhit_t* rayhit_out) {
     vector3_t L = vector3_sub(&sphere->position, &ray->origin);
     float Tca = vector3_dot(&L, &ray->direction);
-    if (Tca < 0.f) return false;
+    if (Tca < 0.f) return false; // Questo garantisce che Tca e' sempre positivo, per cui t0 sara' sempre il punto piu vicino
     float d2 = vector3_magn2(&L) - Tca*Tca;
     float radius2 = sphere->radius * sphere->radius;
     if (d2 > radius2) return false;
     float Thc = sqrtf(radius2 - d2);
 
-    float t0 = Tca - Thc;
+     
+    float t0 = Tca - Thc;       //Nel caso in cui il Ray origin e' dentro la sfera allora t0 viene negativo poiche' Tca < Thc
     float t1 = Tca + Thc;
-    rayhit_out->distance = fminf(t0, t1);
+    //if (t0 < t1 ) rayhit_out->distance = t0; 
+    //else rayhit_out->distance = t1; 
+
+    if (t1 < t0) {
+        float temp = t0;
+        t0 = t1;
+        t1 = temp;
+    }
+    if (t0 < 0) { 
+        t0 = t1;
+        if (t0 < 0) return false;
+    }
+    rayhit_out->distance = t0; 
     rayhit_out->object = sphere;
 
     vector3_t unnorm_dir = vector3_mult_scal(&ray->direction, rayhit_out->distance);
@@ -42,13 +55,8 @@ color_t ray_trace(ray_t* ray, scene_t* scene) {
     if (shadow_has_hit) return scene->bg_color;
 
     //Shading Diffuse
-    float lambert = vector3_dot(&shadow_ray.direction, &hit.normal);
-    if (lambert < 0) lambert = 0.f;
-    //else if (lambert > 1.f) lambert = 1.f;
-
-    color_t c = hit.object->color;
-    c.r = c.r * lambert;
-    c.g = c.g * lambert;
-    c.b = c.b * lambert;
+    float lambert = fmaxf(0.f, vector3_dot(&shadow_ray.direction, &hit.normal));
+    
+    color_t c = color_mult_scal(&hit.object->color, lambert);
     return c;
 }
