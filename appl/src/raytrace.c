@@ -4,6 +4,7 @@
 #include <float.h>
 
 
+
 bool sphere_intersect(sphere_t* sphere, ray_t* ray, rayhit_t* rayhit_out) {
     vector3_t L = vector3_sub(&sphere->position, &ray->origin);
     float Tca = vector3_dot(&L, &ray->direction);
@@ -40,7 +41,7 @@ bool sphere_intersect(sphere_t* sphere, ray_t* ray, rayhit_t* rayhit_out) {
 }
 
 
-bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out) {
+bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out, ray_cast_strategy strategy) {
     rayhit_t best_hit;
     best_hit.distance = FLT_MAX;
     bool has_best_hit = false;
@@ -51,27 +52,33 @@ bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_
         if (has_hit && hit.distance < best_hit.distance) {
             best_hit = hit;
             has_best_hit = true;
+            if (strategy == RAYCAST_FIRST) break;
         }
     }
     *rayhit_out = best_hit;
     return has_best_hit;
 }
 
-color_t ray_trace(ray_t* ray, scene_t* scene) {
+color_t ray_trace(ray_t* ray, scene_t* scene, int current_depth) {
+    if (current_depth > 13) return scene->bg_color;
     //Primary Ray
     rayhit_t hit;
-    bool has_hit = ray_cast(ray, scene->spheres, scene->sphere_count, &hit);
+    bool has_hit = ray_cast(ray, scene->spheres, scene->sphere_count, &hit, RAYCAST_BEST);
     if (!has_hit) return scene->bg_color;
 
     //Shadow Ray
+    float bias = 1e-4;
+    vector3_t biased_normal = vector3_mult_scal(&hit.normal, bias);
+    vector3_t biased_hit_point = vector3_sum(&hit.point, &biased_normal);
+
     ray_t shadow_ray;
-    shadow_ray.origin = hit.point; 
+    shadow_ray.origin = biased_hit_point; 
 
     vector3_t inverted_light_dir = vector3_mult_scal(&scene->light.direction, -1.f);
     shadow_ray.direction = inverted_light_dir;
 
     rayhit_t shadow_hit;
-    bool shadow_has_hit = ray_cast(&shadow_ray, scene->spheres, scene->sphere_count, &shadow_hit);
+    bool shadow_has_hit = ray_cast(&shadow_ray, scene->spheres, scene->sphere_count, &shadow_hit, RAYCAST_FIRST);
     if (shadow_has_hit) return scene->bg_color;
 
     
@@ -80,7 +87,8 @@ color_t ray_trace(ray_t* ray, scene_t* scene) {
 
     //Diffuse
     float lambert = fmaxf(0.f, vector3_dot(&shadow_ray.direction, &hit.normal));
-    color_t diffuse = color_mult_scal(&hit.object->color, lambert);
+    lambert *= (1.f - hit.object->material.reflect_factor);
+    color_t diffuse = color_mult_scal(&hit.object->material.albedo, lambert);
     
     //Specular
     vector3_t* L = &shadow_ray.direction;
@@ -88,12 +96,26 @@ color_t ray_trace(ray_t* ray, scene_t* scene) {
     vector3_t H = vector3_sum(L, &V);
     H = vector3_norm(&H);
     float specular_strenght = fmaxf(0.f, vector3_dot(&hit.normal, &H));
-    float specular_intesity = powf(specular_strenght, 100.f);
+    float specular_intesity = powf(specular_strenght, hit.object->material.specular_shiness_factor);
     color_t specular = color_mult_scal(&scene->light.color, specular_intesity);
+    specular = color_mult(&specular, &hit.object->material.specular_color);
 
-    color_t final = {0.f, 0.f, 0.f};
-    final = color_sum(&final, &diffuse);
-    final = color_sum(&final, &specular);
+    color_t blinn_phong = {0.f, 0.f, 0.f};
+    blinn_phong = color_sum(&blinn_phong, &diffuse);
+    blinn_phong = color_sum(&blinn_phong, &specular);
+    
+    vector3_t refl_vect = vector3_refl(&ray->direction, &hit.normal);
+    //? normalizzare
+    ray_t refl_ray;
+    refl_ray.origin = biased_hit_point;
+    refl_ray.direction = refl_vect;
+
+    color_t refl_color = ray_trace(&refl_ray, scene, current_depth + 1);
+    refl_color = color_mult_scal(&refl_color, hit.object->material.reflect_factor);
+    
+    color_t final = color_black();
+    final = color_sum(&final, &blinn_phong);
+    final = color_sum(&final, &refl_color);
     final = color_clamp(&final);
     return final;
 }

@@ -8,7 +8,12 @@
 typedef struct sphere_t {
     vector3_t position;
     float radius;
-    color_t color;
+    struct {
+        color_t albedo;
+        color_t specular_color;
+        float specular_shiness_factor;
+        float reflect_factor;
+    } material;
 } sphere_t;
 
 typedef struct scene_t {

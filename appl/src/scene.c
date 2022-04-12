@@ -21,15 +21,24 @@ scene_t* scene_create(int screen_width, int screen_height, SDL_Renderer* r) {
    scene->spheres = (sphere_t*)malloc(sizeof(sphere_t) * scene->sphere_count);
    scene->spheres[0].position = (vector3_t){0.f, 0.f, -5.f};
    scene->spheres[0].radius = 1.f;
-   scene->spheres[0].color = (color_t){1.f, 0.f, 0.f};
+   scene->spheres[0].material.albedo = (color_t){1.f, 0.f, 0.f};
+   scene->spheres[0].material.specular_shiness_factor = 0.f;
+   scene->spheres[0].material.specular_color = color_black();
+   scene->spheres[0].material.reflect_factor = 0.f;
 
    scene->spheres[1].position = (vector3_t){0.f, 0.f, -3.f};
    scene->spheres[1].radius = 0.5f;
-   scene->spheres[1].color = (color_t){0.f, 1.f, 0.f};
+   scene->spheres[1].material.albedo = (color_t){0.f, 1.f, 0.f};
+   scene->spheres[1].material.specular_shiness_factor = 100.f;
+   scene->spheres[1].material.specular_color = color_white();
+   scene->spheres[1].material.reflect_factor = 1.f;
 
    scene->spheres[2].position = (vector3_t){2.f, 0.f, -5.f};
    scene->spheres[2].radius = 1.f;
-   scene->spheres[2].color = (color_t){0.f, 0.f, 1.f};
+   scene->spheres[2].material.albedo = (color_t){0.f, 0.f, 1.f};
+   scene->spheres[2].material.specular_shiness_factor = 30.f;
+   scene->spheres[2].material.specular_color = color_red();
+   scene->spheres[2].material.reflect_factor = 0.5f;
 
    scene->light.direction = (vector3_t){0.f, -1.f, 0.f};
    scene->light.color = (color_t){1.f, 1.f, 1.f};
@@ -66,7 +75,7 @@ void scene_update(scene_t* scene, float delta_time) {
          vector3_t ray_dir = vector3_sub(&plane_point, &ray_origin);
          ray.direction = vector3_norm(&ray_dir);
 
-         color_t c = ray_trace(&ray, scene);
+         color_t c = ray_trace(&ray, scene, 1);
 
          SDL_SetRenderDrawColor(scene->screen.render, c.r * 255.f, c.g * 255.f, c.b * 255.f, 255);
          SDL_RenderDrawPoint(scene->screen.render, w, h);

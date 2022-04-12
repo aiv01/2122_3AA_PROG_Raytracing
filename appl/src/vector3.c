@@ -45,3 +45,10 @@ vector3_t vector3_sum(vector3_t* v1, vector3_t* v2) {
     r.z = v1->z + v2->z;
     return r;
 }
+
+vector3_t vector3_refl(vector3_t* v, vector3_t* n) {
+    float dot2 = 2.f * vector3_dot(v, n);
+    vector3_t dot2norm = vector3_mult_scal(n, dot2);
+    vector3_t sub = vector3_sub(v, &dot2norm);
+    return sub;
+}

@@ -17,5 +17,10 @@ typedef struct rayhit_t {
     vector3_t normal;
 } rayhit_t;
 
-color_t ray_trace(ray_t* ray, scene_t* scene);
-bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out);
+typedef enum {
+    RAYCAST_BEST,
+    RAYCAST_FIRST
+} ray_cast_strategy;
+
+color_t ray_trace(ray_t* ray, scene_t* scene, int current_depth);
+bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out, ray_cast_strategy stategy);
