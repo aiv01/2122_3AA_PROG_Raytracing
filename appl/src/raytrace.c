@@ -1,8 +1,10 @@
 #include "raytrace.h"
 #include "scene.h"
 #include <math.h>
+#include <float.h>
 
-bool ray_cast(ray_t* ray, sphere_t* sphere, rayhit_t* rayhit_out) {
+
+bool sphere_intersect(sphere_t* sphere, ray_t* ray, rayhit_t* rayhit_out) {
     vector3_t L = vector3_sub(&sphere->position, &ray->origin);
     float Tca = vector3_dot(&L, &ray->direction);
     if (Tca < 0.f) return false; // Questo garantisce che Tca e' sempre positivo, per cui t0 sara' sempre il punto piu vicino
@@ -37,10 +39,28 @@ bool ray_cast(ray_t* ray, sphere_t* sphere, rayhit_t* rayhit_out) {
     return true;
 }
 
+
+bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out) {
+    rayhit_t best_hit;
+    best_hit.distance = FLT_MAX;
+    bool has_best_hit = false;
+    for(int i=0; i < sphere_count; ++i) {
+        sphere_t* each = spheres + i;
+        rayhit_t hit;
+        bool has_hit = sphere_intersect(each, ray, &hit);
+        if (has_hit && hit.distance < best_hit.distance) {
+            best_hit = hit;
+            has_best_hit = true;
+        }
+    }
+    *rayhit_out = best_hit;
+    return has_best_hit;
+}
+
 color_t ray_trace(ray_t* ray, scene_t* scene) {
     //Primary Ray
     rayhit_t hit;
-    bool has_hit = ray_cast(ray, &scene->sphere, &hit);
+    bool has_hit = ray_cast(ray, scene->spheres, scene->sphere_count, &hit);
     if (!has_hit) return scene->bg_color;
 
     //Shadow Ray
@@ -51,7 +71,7 @@ color_t ray_trace(ray_t* ray, scene_t* scene) {
     shadow_ray.direction = inverted_light_dir;
 
     rayhit_t shadow_hit;
-    bool shadow_has_hit = ray_cast(&shadow_ray, &scene->sphere, &shadow_hit);
+    bool shadow_has_hit = ray_cast(&shadow_ray, scene->spheres, scene->sphere_count, &shadow_hit);
     if (shadow_has_hit) return scene->bg_color;
 
     //Shading Diffuse

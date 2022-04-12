@@ -17,9 +17,19 @@ scene_t* scene_create(int screen_width, int screen_height, SDL_Renderer* r) {
    scene->camera.fov_tan = tanf(half_fov_rad);
    scene->camera.position = (vector3_t){0.f, 0.f, 0.f};
 
-   scene->sphere.position = (vector3_t){0.f, 0.f, -5.f};
-   scene->sphere.radius = 1.f;
-   scene->sphere.color = (color_t){1.f, 0.f, 0.f};
+   scene->sphere_count = 3;
+   scene->spheres = (sphere_t*)malloc(sizeof(sphere_t) * scene->sphere_count);
+   scene->spheres[0].position = (vector3_t){0.f, 0.f, -5.f};
+   scene->spheres[0].radius = 1.f;
+   scene->spheres[0].color = (color_t){1.f, 0.f, 0.f};
+
+   scene->spheres[1].position = (vector3_t){-2.f, 0.f, -5.f};
+   scene->spheres[1].radius = 1.f;
+   scene->spheres[1].color = (color_t){0.f, 1.f, 0.f};
+
+   scene->spheres[2].position = (vector3_t){2.f, 0.f, -5.f};
+   scene->spheres[2].radius = 1.f;
+   scene->spheres[2].color = (color_t){0.f, 0.f, 1.f};
 
    scene->light.direction = (vector3_t){0.f, -1.f, 0.f};
    scene->light.color = (color_t){1.f, 1.f, 1.f};

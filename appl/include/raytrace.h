@@ -18,4 +18,4 @@ typedef struct rayhit_t {
 } rayhit_t;
 
 color_t ray_trace(ray_t* ray, scene_t* scene);
-bool ray_cast(ray_t* ray, sphere_t* sphere, rayhit_t* rayhit_out);
+bool ray_cast(ray_t* ray, sphere_t* spheres, int sphere_count, rayhit_t* rayhit_out);

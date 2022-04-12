@@ -23,7 +23,8 @@ typedef struct scene_t {
         float fov_tan;
         vector3_t position;
     } camera;
-    sphere_t sphere;
+    sphere_t* spheres;
+    int sphere_count;
     struct {
         vector3_t direction;
         color_t color;
